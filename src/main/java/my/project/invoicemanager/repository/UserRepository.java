@@ -1,6 +1,7 @@
 package my.project.invoicemanager.repository;
 
-import org.springframework.security.core.userdetails.User;
+
+import my.project.invoicemanager.model.User;
 
 import java.util.Collection;
 
