@@ -7,7 +7,6 @@ import my.project.invoicemanager.model.Role;
 import my.project.invoicemanager.model.User;
 import my.project.invoicemanager.repository.RoleRepository;
 import my.project.invoicemanager.repository.UserRepository;
-import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
@@ -36,34 +35,23 @@ public class UserRepositoryImpl implements UserRepository {
     private final BCryptPasswordEncoder encoder;
     @Override
     public User create(User user) {
-        //check the email is unique
         if(getEmailCount(user.getEmail().trim().toLowerCase()) > 0) throw new ApiException("Email already in use. " +
             "Please use a different email and try again.");
-        //save new user
         try{
             KeyHolder holder = new GeneratedKeyHolder();
             SqlParameterSource parameters = getSqlParameterSource(user);
             jdbc.update(INSERT_USER_QUERY, parameters, holder);
             user.setId(requireNonNull(holder.getKey()).longValue());
-            //add role to the user
             roleRepository.addRoleToUser(user.getId(), ROLE_USER.name());
-            //send verification URL
             String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), ACCOUNT.getType());
-            //save URL in verification table
             jdbc.update(INSERT_ACCOUNT_VERIFICATION_URL_QUERY, Map.of("userId", user.getId(), "url", verificationUrl));
-            //send email to user with verification URL
-            // implementation later TODO in EmailService
+//            TODO in email service create sending verification url
             user.setEnabled(false);
             user.setNotLocked(true);
-            //return the newly created user
             return user;
-            //if any errors, throw exception with proper message
-        } catch (EmptyResultDataAccessException exception) {
-
         } catch (Exception exception){
-
+            throw new ApiException("An error occurred. Please try again.");
         }
-        return null;
     }
 
     @Override
