@@ -15,14 +15,16 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
 import static my.project.invoicemanager.enumeration.RoleType.ROLE_USER;
-import static my.project.invoicemanager.query.UserQuery.COUNT_USER_EMAIL_QUERY;
-import static my.project.invoicemanager.query.UserQuery.INSERT_USER_QUERY;
+import static my.project.invoicemanager.enumeration.VerificationType.ACCOUNT;
+import static my.project.invoicemanager.query.UserQuery.*;
 
 @Repository
 @RequiredArgsConstructor
@@ -46,9 +48,15 @@ public class UserRepositoryImpl implements UserRepository {
             //add role to the user
             roleRepository.addRoleToUser(user.getId(), ROLE_USER.name());
             //send verification URL
+            String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), ACCOUNT.getType());
             //save URL in verification table
+            jdbc.update(INSERT_ACCOUNT_VERIFICATION_URL_QUERY, Map.of("userId", user.getId(), "url", verificationUrl));
             //send email to user with verification URL
+            // implementation later TODO in EmailService
+            user.setEnabled(false);
+            user.setNotLocked(true);
             //return the newly created user
+            return user;
             //if any errors, throw exception with proper message
         } catch (EmptyResultDataAccessException exception) {
 
@@ -90,4 +98,10 @@ public class UserRepositoryImpl implements UserRepository {
                 .addValue("password", encoder.encode(user.getPassword()));
     }
 
+    private String getVerificationUrl(String key, String type){
+        return ServletUriComponentsBuilder
+                .fromCurrentContextPath()
+                .path("/user/verify/" + type + "/" + key)
+                .toUriString();
+    }
 }
