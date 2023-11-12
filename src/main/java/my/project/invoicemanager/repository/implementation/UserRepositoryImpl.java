@@ -3,7 +3,9 @@ package my.project.invoicemanager.repository.implementation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.project.invoicemanager.exception.ApiException;
+import my.project.invoicemanager.model.Role;
 import my.project.invoicemanager.model.User;
+import my.project.invoicemanager.repository.RoleRepository;
 import my.project.invoicemanager.repository.UserRepository;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -18,6 +20,7 @@ import java.util.Collection;
 import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
+import static my.project.invoicemanager.enumeration.RoleType.ROLE_USER;
 import static my.project.invoicemanager.query.UserQuery.COUNT_USER_EMAIL_QUERY;
 import static my.project.invoicemanager.query.UserQuery.INSERT_USER_QUERY;
 
@@ -27,6 +30,7 @@ import static my.project.invoicemanager.query.UserQuery.INSERT_USER_QUERY;
 public class UserRepositoryImpl implements UserRepository {
 
     private final NamedParameterJdbcTemplate jdbc;
+    private final RoleRepository<Role> roleRepository;
     private final BCryptPasswordEncoder encoder;
     @Override
     public User create(User user) {
@@ -40,6 +44,7 @@ public class UserRepositoryImpl implements UserRepository {
             jdbc.update(INSERT_USER_QUERY, parameters, holder);
             user.setId(requireNonNull(holder.getKey()).longValue());
             //add role to the user
+            roleRepository.addRoleToUser(user.getId(), ROLE_USER.name());
             //send verification URL
             //save URL in verification table
             //send email to user with verification URL
