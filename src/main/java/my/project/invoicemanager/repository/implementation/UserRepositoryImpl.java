@@ -50,6 +50,7 @@ public class UserRepositoryImpl implements UserRepository {
             user.setNotLocked(true);
             return user;
         } catch (Exception exception){
+            log.error(exception.getMessage());
             throw new ApiException("An error occurred. Please try again.");
         }
     }
