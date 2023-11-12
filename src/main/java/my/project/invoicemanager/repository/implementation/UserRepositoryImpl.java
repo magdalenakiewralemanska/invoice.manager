@@ -3,9 +3,7 @@ package my.project.invoicemanager.repository.implementation;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import my.project.invoicemanager.exception.ApiException;
-import my.project.invoicemanager.model.Role;
 import my.project.invoicemanager.model.User;
-import my.project.invoicemanager.repository.RoleRepository;
 import my.project.invoicemanager.repository.UserRepository;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
@@ -15,16 +13,13 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.UUID;
 
 import static java.util.Objects.requireNonNull;
-import static my.project.invoicemanager.enumeration.RoleType.ROLE_USER;
-import static my.project.invoicemanager.enumeration.VerificationType.ACCOUNT;
-import static my.project.invoicemanager.query.UserQuery.*;
+import static my.project.invoicemanager.query.UserQuery.COUNT_USER_EMAIL_QUERY;
+import static my.project.invoicemanager.query.UserQuery.INSERT_USER_QUERY;
 
 @Repository
 @RequiredArgsConstructor
