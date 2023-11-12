@@ -45,7 +45,7 @@ public class UserRepositoryImpl implements UserRepository {
             roleRepository.addRoleToUser(user.getId(), ROLE_USER.name());
             String verificationUrl = getVerificationUrl(UUID.randomUUID().toString(), ACCOUNT.getType());
             jdbc.update(INSERT_ACCOUNT_VERIFICATION_URL_QUERY, Map.of("userId", user.getId(), "url", verificationUrl));
-//            TODO in email service create sending verification url
+//            TODO in email service create method for sending verification url
             user.setEnabled(false);
             user.setNotLocked(true);
             return user;

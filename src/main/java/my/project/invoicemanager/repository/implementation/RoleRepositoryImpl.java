@@ -15,14 +15,13 @@ import java.util.Map;
 
 import static java.util.Objects.requireNonNull;
 import static my.project.invoicemanager.enumeration.RoleType.ROLE_USER;
+import static my.project.invoicemanager.query.RoleQuery.*;
 
 @Repository
 @RequiredArgsConstructor
 @Slf4j
 public class RoleRepositoryImpl implements RoleRepository<Role> {
 
-    private static final String SELECT_ROLE_BY_NAME_QUERY = "";
-    private static final String INSERT_ROLE_TO_USER_QUERY = "";
     private final NamedParameterJdbcTemplate jdbc;
     @Override
     public Role create(Role data) {
