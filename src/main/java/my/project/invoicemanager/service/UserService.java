@@ -6,4 +6,5 @@ import my.project.invoicemanager.model.User;
 public interface UserService {
 
     UserDto createUser(User user);
+    UserDto getUserByEmail(String email);
 }

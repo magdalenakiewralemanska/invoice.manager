@@ -5,13 +5,19 @@ import lombok.extern.slf4j.Slf4j;
 import my.project.invoicemanager.exception.ApiException;
 import my.project.invoicemanager.model.Role;
 import my.project.invoicemanager.model.User;
+import my.project.invoicemanager.model.UserPrincipal;
 import my.project.invoicemanager.repository.RoleRepository;
 import my.project.invoicemanager.repository.UserRepository;
+import my.project.invoicemanager.rowmapper.UserRowMapper;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
@@ -28,16 +34,17 @@ import static my.project.invoicemanager.query.UserQuery.*;
 @Repository
 @RequiredArgsConstructor
 @Slf4j
-public class UserRepositoryImpl implements UserRepository {
+public class UserRepositoryImpl implements UserRepository, UserDetailsService {
 
     private final NamedParameterJdbcTemplate jdbc;
     private final RoleRepository<Role> roleRepository;
     private final BCryptPasswordEncoder encoder;
+
     @Override
     public User create(User user) {
-        if(getEmailCount(user.getEmail().trim().toLowerCase()) > 0) throw new ApiException("Email already in use. " +
-            "Please use a different email and try again.");
-        try{
+        if (getEmailCount(user.getEmail().trim().toLowerCase()) > 0) throw new ApiException("Email already in use. " +
+                "Please use a different email and try again.");
+        try {
             KeyHolder holder = new GeneratedKeyHolder();
             SqlParameterSource parameters = getSqlParameterSource(user);
             jdbc.update(INSERT_USER_QUERY, parameters, holder);
@@ -49,7 +56,7 @@ public class UserRepositoryImpl implements UserRepository {
             user.setEnabled(false);
             user.setNotLocked(true);
             return user;
-        } catch (Exception exception){
+        } catch (Exception exception) {
             log.error(exception.getMessage());
             throw new ApiException("An error occurred. Please try again.");
         }
@@ -87,10 +94,34 @@ public class UserRepositoryImpl implements UserRepository {
                 .addValue("password", encoder.encode(user.getPassword()));
     }
 
-    private String getVerificationUrl(String key, String type){
+    private String getVerificationUrl(String key, String type) {
         return ServletUriComponentsBuilder
                 .fromCurrentContextPath()
                 .path("/user/verify/" + type + "/" + key)
                 .toUriString();
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
+        User user = getUserByEmail(email);
+            if (user == null) {
+                log.error("User not found in the database");
+                throw new UsernameNotFoundException("User not found in the database");
+            } else {
+                log.info("User found in the database: {}", email);
+            }
+        return new UserPrincipal(user, roleRepository.getRoleByUserId(user.getId()).getPermission());
+    }
+
+    public User getUserByEmail(String email) {
+        try {
+            return jdbc.queryForObject(SELECT_USER_BY_EMAIL_QUERY, Map.of("email", email), new UserRowMapper());
+        } catch (EmptyResultDataAccessException exception) {
+            log.error(exception.getMessage());
+            throw new ApiException("No user found by email: " + email);
+        } catch (Exception exception){
+            log.error(exception.getMessage());
+            throw new ApiException("An error occurred. Please try again.");
+        }
     }
 }
